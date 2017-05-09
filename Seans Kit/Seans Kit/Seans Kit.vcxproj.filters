@@ -13,28 +13,25 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="SDK">
-      <UniqueIdentifier>{7a11d083-6ce8-48f9-886d-7283e926169a}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Lucian.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Utilities.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Vector3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="LPPConstants.h">
-      <Filter>SDK</Filter>
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lucian.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PluginData.h">
-      <Filter>SDK</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PluginSDK.h">
-      <Filter>SDK</Filter>
-    </ClInclude>
-    <ClInclude Include="Vector3.h">
-      <Filter>SDK</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SeansKit.h">
       <Filter>Header Files</Filter>
@@ -44,13 +41,13 @@
     <ClCompile Include="Lucian.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Utilities.cpp">
+    <ClCompile Include="PluginSDK.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PluginSDK.cpp">
-      <Filter>SDK</Filter>
-    </ClCompile>
     <ClCompile Include="SeansKit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

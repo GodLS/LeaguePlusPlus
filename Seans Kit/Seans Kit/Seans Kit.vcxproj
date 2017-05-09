@@ -18,16 +18,30 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="LPPConstants.h" />
+    <ClInclude Include="Lucian.h" />
+    <ClInclude Include="PluginData.h" />
+    <ClInclude Include="PluginSDK.h" />
+    <ClInclude Include="SeansKit.h" />
+    <ClInclude Include="Utilities.h" />
+    <ClInclude Include="Vector3.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Lucian.cpp" />
+    <ClCompile Include="PluginSDK.cpp" />
+    <ClCompile Include="SeansKit.cpp" />
+    <ClCompile Include="Utilities.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{25B650DF-9B32-40DE-904A-FAF3C6A41A64}</ProjectGuid>
-    <RootNamespace>ADCPackage</RootNamespace>
+    <ProjectGuid>{A3B4ED36-1951-48F4-9E45-9EFB8D2D5919}</ProjectGuid>
+    <RootNamespace>SeansKit</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
-    <ProjectName>Seans Kit</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
@@ -70,9 +84,7 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <TargetName>Seans Kit</TargetName>
-  </PropertyGroup>
+  <PropertyGroup />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -113,21 +125,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="SeansKit.h" />
-    <ClInclude Include="LPPConstants.h" />
-    <ClInclude Include="Lucian.h" />
-    <ClInclude Include="PluginData.h" />
-    <ClInclude Include="PluginSDK.h" />
-    <ClInclude Include="Utilities.h" />
-    <ClInclude Include="Vector3.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="SeansKit.cpp" />
-    <ClCompile Include="Lucian.cpp" />
-    <ClCompile Include="PluginSDK.cpp" />
-    <ClCompile Include="Utilities.cpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

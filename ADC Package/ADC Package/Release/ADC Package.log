@@ -1,0 +1,10 @@
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(387,5): warning MSB8028: The intermediate directory (Release\) contains files shared from another project (ADC Package.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  SeansKit.cpp
+  Lucian.cpp
+  PluginSDK.cpp
+  Utilities.cpp
+     Creating library C:\Users\Sean\documents\visual studio 2017\Projects\ADC Package\Release\Seans Kit.lib and object C:\Users\Sean\documents\visual studio 2017\Projects\ADC Package\Release\Seans Kit.exp
+  Generating code
+  All 221 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  ADC Package.vcxproj -> C:\Users\Sean\documents\visual studio 2017\Projects\ADC Package\Release\Seans Kit.dll

@@ -9,6 +9,13 @@ PLUGIN_EVENT(void) OnGameUpdate()
 	if (!GUtility->IsLeagueWindowFocused() || GGame->IsChatOpen())
 		return;
 
+	if (Player()->HasBuff("LucianR"))
+		GOrbwalking->SetAttacksAllowed(false);
+	
+	else
+		GOrbwalking->SetAttacksAllowed(true);
+
+
 	eOrbwalkingMode Mode = GOrbwalking->GetOrbwalkingMode();
 
 	switch (Mode)

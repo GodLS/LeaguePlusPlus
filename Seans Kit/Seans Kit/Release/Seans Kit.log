@@ -1,9 +1,8 @@
-﻿  Lucian.cpp
-  PluginSDK.cpp
-  SeansKit.cpp
-  Utilities.cpp
-     Creating library c:\users\sean\documents\visual studio 2017\Projects\Seans Kit\Release\Seans Kit.lib and object c:\users\sean\documents\visual studio 2017\Projects\Seans Kit\Release\Seans Kit.exp
+﻿  SeansKit.cpp
+     Creating library D:\Downloads\LeaguePlusPlus-master (1)\LeaguePlusPlus-master\Seans Kit\Release\Seans Kit.lib and object D:\Downloads\LeaguePlusPlus-master (1)\LeaguePlusPlus-master\Seans Kit\Release\Seans Kit.exp
   Generating code
-  All 221 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  0 of 1048 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    12 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
-  Seans Kit.vcxproj -> c:\users\sean\documents\visual studio 2017\Projects\Seans Kit\Release\Seans Kit.dll
+  Seans Kit.vcxproj -> D:\Downloads\LeaguePlusPlus-master (1)\LeaguePlusPlus-master\Seans Kit\Release\Seans Kit.dll

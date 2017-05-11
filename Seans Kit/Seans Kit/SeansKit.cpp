@@ -11,7 +11,7 @@ PLUGIN_API void OnLoad(IPluginSDK* PluginSDK)
 	PluginSDKSetup(PluginSDK);
 
 	SeansKit::LoadPlugin();
-	SeansKit::CheckUpdates(1.1);
+	SeansKit::CheckUpdates(2);
 
 }
 

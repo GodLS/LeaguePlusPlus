@@ -446,7 +446,7 @@ void Lucian::InitMenu()
 	HarassERange = HarassMenu->AddFloat("-- cursor distance > ", 0, 1000, 350);
 
 	LaneclearMenu = LucianMenu->AddMenu("Laneclear");
-	LaneclearMinMana = LucianMenu->AddFloat("Min. mana percent", 0, 100, 25);
+	LaneclearMinMana = LaneclearMenu->AddFloat("Min. mana percent", 0, 100, 25);
 	LaneclearQ = LaneclearMenu->CheckBox("Use Q in laneclear when:", true);
 	LaneclearQChamps = LaneclearMenu->CheckBox("-- can hit champion", true);
 	LaneclearQMinions = LaneclearMenu->AddInteger("-- X minions hit [disabled]", 1, 7, 3);

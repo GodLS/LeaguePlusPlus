@@ -4,6 +4,7 @@
 
 using namespace Lucian;
 
+
 PLUGIN_EVENT(void) OnGameUpdate()
 {
 	if (!GUtility->IsLeagueWindowFocused() || GGame->IsChatOpen())
@@ -48,6 +49,34 @@ PLUGIN_EVENT(void) OnGameUpdate()
 
 void Lucian::Combo()
 {
+
+	if (ComboW->Enabled())
+	{
+		if (W->IsReady())
+		{
+			IUnit* WTarget = GTargetSelector->FindTarget(QuickestKill, PhysicalDamage, W->Range());
+
+			if (WTarget && WTarget->IsValidTarget())
+			{
+				if (Player()->GetSpellRemainingCooldown(kSlotQ) / Player()->GetSpellTotalCooldown(kSlotQ) > .96)
+					return;
+
+				if (Player()->IsDashing())
+					return;
+
+				if (Player()->Distance(WTarget) > Q->Range())
+				{
+					auto Health = WTarget->GetHealth();
+					if (Health < GDamage->GetSpellDamage(Player(), WTarget, kSlotQ) + GDamage->GetAutoAttackDamage(Player(), WTarget, true) && Health > GDamage->GetSpellDamage(Player(), WTarget, kSlotW) + GDamage->GetAutoAttackDamage(Player(), WTarget, true))
+						return;
+				}
+
+				if (!Passive() || WTarget->GetHealth() < GDamage->GetSpellDamage(Player(), WTarget, kSlotW) + GDamage->GetAutoAttackDamage(Player(), WTarget, true))
+					W->CastOnTarget(WTarget, kHitChanceLow);
+			}
+		}
+	}
+
 	if (Q->IsReady())
 	{
 		if (ComboQ->Enabled())
@@ -81,8 +110,14 @@ void Lucian::Combo()
 			}
 		}
 	}
+}
 
-	if (ComboW->Enabled())
+void Lucian::Harass()
+{
+	if (Player()->ManaPercent() < HarassMinMana->GetFloat())
+		return;
+
+	if (HarassW->Enabled())
 	{
 		if (W->IsReady())
 		{
@@ -109,10 +144,6 @@ void Lucian::Combo()
 		}
 	}
 
-}
-
-void Lucian::Harass()
-{
 	if (Q->IsReady())
 	{
 		if (HarassQ->Enabled())
@@ -147,36 +178,13 @@ void Lucian::Harass()
 		}
 	}
 
-	if (HarassW->Enabled())
-	{
-		if (W->IsReady())
-		{
-			IUnit* WTarget = GTargetSelector->FindTarget(QuickestKill, PhysicalDamage, W->Range());
-
-			if (WTarget && WTarget->IsValidTarget())
-			{
-				if (Player()->GetSpellRemainingCooldown(kSlotQ) / Player()->GetSpellTotalCooldown(kSlotQ) > .96)
-					return;
-
-				if (Player()->IsDashing())
-					return;
-
-				if (Player()->Distance(WTarget) > Q->Range())
-				{
-					auto Health = WTarget->GetHealth();
-					if (Health < GDamage->GetSpellDamage(Player(), WTarget, kSlotQ) + GDamage->GetAutoAttackDamage(Player(), WTarget, true) && Health > GDamage->GetSpellDamage(Player(), WTarget, kSlotW) + GDamage->GetAutoAttackDamage(Player(), WTarget, true))
-						return;
-				}
-
-				if (!Passive() || WTarget->GetHealth() < GDamage->GetSpellDamage(Player(), WTarget, kSlotW) + GDamage->GetAutoAttackDamage(Player(), WTarget, true))
-					W->CastOnTarget(WTarget, kHitChanceLow);
-			}
-		}
-	}
 }
 
 void Lucian::Laneclear()
 {
+	if (Player()->ManaPercent() < LaneclearMinMana->GetFloat())
+		return;
+
 	if (LaneclearQChamps && Player()->ManaPercent() > 20)
 	{
 		if (!Q->IsReady())
@@ -280,7 +288,7 @@ void Lucian::AutoKillsteal()
 
 bool Lucian::ExtendedQ()
 {
-	IUnit* Target = GTargetSelector->FindTarget(QuickestKill, PhysicalDamage, Q2->Range());
+	auto Target = GTargetSelector->FindTarget(QuickestKill, PhysicalDamage, Q2->Range());
 
 	if (!Target || !Target->IsValidTarget())
 		return false;
@@ -391,11 +399,6 @@ bool Lucian::Passive()
 	return Player()->HasBuff("LucianPassiveBuff");
 }
 
-IUnit* Lucian::Player()
-{
-	return GEntityList->Player();
-}
-
 void Lucian::InitEvents()
 {
 	GEventManager->AddEventHandler(kEventOnGameUpdate, OnGameUpdate);
@@ -435,6 +438,7 @@ void Lucian::InitMenu()
 	ComboERange = ComboMenu->AddFloat("-- cursor distance > ", 0, 1000, 350);
 
 	HarassMenu = LucianMenu->AddMenu("Harass");
+	HarassMinMana = HarassMenu->AddFloat("Min. mana percent", 0, 100, 25);
 	HarassQ = HarassMenu->CheckBox("Use Q in harass", true);
 	HarassQExt = HarassMenu->CheckBox("Use Extended Q in harass", true);
 	HarassW = HarassMenu->CheckBox("Use W in harass", false);
@@ -442,6 +446,7 @@ void Lucian::InitMenu()
 	HarassERange = HarassMenu->AddFloat("-- cursor distance > ", 0, 1000, 350);
 
 	LaneclearMenu = LucianMenu->AddMenu("Laneclear");
+	LaneclearMinMana = LucianMenu->AddFloat("Min. mana percent", 0, 100, 25);
 	LaneclearQ = LaneclearMenu->CheckBox("Use Q in laneclear when:", true);
 	LaneclearQChamps = LaneclearMenu->CheckBox("-- can hit champion", true);
 	LaneclearQMinions = LaneclearMenu->AddInteger("-- X minions hit [disabled]", 1, 7, 3);
@@ -456,8 +461,10 @@ void Lucian::InitMenu()
 
 }
 
-PLUGIN_API void OnUnload()
+
+void Lucian::UnLoad()
 {
+	MainMenu->SaveSettings();
 	MainMenu->Remove();
 
 	GEventManager->RemoveEventHandler(kEventOnGameUpdate, OnGameUpdate);

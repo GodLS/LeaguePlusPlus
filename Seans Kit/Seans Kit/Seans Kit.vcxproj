@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Caitlyn.h" />
     <ClInclude Include="LPPConstants.h" />
     <ClInclude Include="Lucian.h" />
     <ClInclude Include="PluginData.h" />
@@ -28,6 +29,7 @@
     <ClInclude Include="Vector3.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Caitlyn.cpp" />
     <ClCompile Include="Lucian.cpp" />
     <ClCompile Include="PluginSDK.cpp" />
     <ClCompile Include="SeansKit.cpp" />

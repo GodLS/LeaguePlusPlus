@@ -52,3 +52,69 @@ bool IsPointInsideRectangle(Vec3 From, Vec3 To, float Radius, Vec3 Point)
 }
 
 /* End credits */
+
+
+bool IsImmobileBuff(eBuffType type)
+{
+	return  type == BUFF_Stun ||
+			type == BUFF_Taunt ||
+			type == BUFF_Snare ||
+			type == BUFF_Sleep ||
+			type == BUFF_Frenzy ||
+			type == BUFF_Fear ||
+			type == BUFF_Charm ||
+			type == BUFF_Suppression ||
+			type == BUFF_Flee ||
+			type == BUFF_Knockup ||
+			type == BUFF_Knockback;
+}
+
+bool IsImmobile(IUnit* Unit)
+{
+	std::vector<void*> buffs;
+	Unit->GetAllBuffsData(buffs);
+
+	for (auto *buff : buffs)
+	{
+		return IsImmobileBuff(GBuffData->GetBuffType(buff));
+	}
+	return false;
+}
+
+float IsImmobileFor(IUnit* Target)
+{
+	std::vector<void *> buffs;
+	Target->GetAllBuffsData(buffs);
+
+	float time = 0.0f;
+	for (auto *buff : buffs)
+	{
+		if (GBuffData->IsActive(buff) && GGame->Time() <= GBuffData->GetEndTime(buff) && IsImmobileBuff(GBuffData->GetBuffType(buff)))
+		{
+			float timeleft = GBuffData->GetEndTime(buff) - GGame->Time();
+			if (time < timeleft)
+				time = timeleft;
+			
+		}
+	}
+
+	return time;
+}
+
+int CountEnemiesInRange(IUnit* Target, float Range)
+{
+	int Count = 0;
+
+	auto NetworkID = Target->GetNetworkId();
+	auto Enemies = GEntityList->GetAllHeros(false, true);
+
+	for (auto Enemy : Enemies)
+	{
+		if (Enemy && Enemy->IsValidTarget() && Enemy->GetNetworkId() != NetworkID && Enemy->Distance(Target) <= Range)
+		{
+			Count++;
+		}
+	}
+
+	return Count;
+}

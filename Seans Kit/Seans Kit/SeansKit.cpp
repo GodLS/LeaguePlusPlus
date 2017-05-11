@@ -1,5 +1,6 @@
 #include "SeansKit.h"
 #include "Lucian.h"
+#include "Caitlyn.h"
 #include <string>
 #include <regex>
 
@@ -14,12 +15,29 @@ PLUGIN_API void OnLoad(IPluginSDK* PluginSDK)
 
 }
 
+PLUGIN_API void OnUnload()
+{
+	std::string ChampionName = GEntityList->Player()->ChampionName();
+
+	//if (ChampionName == "Caitlyn")
+	//	Caitlyn::UnLoad();
+	if (ChampionName == "Lucian")
+		Lucian::UnLoad();
+}
+
 void SeansKit::LoadPlugin()
 {
 	std::string ChampionName = GEntityList->Player()->ChampionName();
 
+	//if (ChampionName == "Caitlyn")
+	//	Caitlyn::Load();
 	if (ChampionName == "Lucian")
 		Lucian::Load();
+}
+
+IUnit* Player()
+{
+	return GEntityList->Player();
 }
 
 /* Thanks SoNiice for version checker. */

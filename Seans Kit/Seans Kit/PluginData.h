@@ -8,6 +8,7 @@
 
 #include "Vector3.h"
 #include "LPPConstants.h"
+#include <algorithm>
 
 class IUnit;
 class ISpellBook;
@@ -429,6 +430,9 @@ public:
 
 		return static_cast<float>(sqrt(pow((x2 - x1), 2.0) + pow((y2 - y1), 2.0) + pow((z2 - z1), 2.0)));
 	}
+
+
+
 };
 
 #endif // PluginData_h__

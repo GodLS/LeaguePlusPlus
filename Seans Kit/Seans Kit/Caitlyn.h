@@ -1,6 +1,5 @@
 #pragma once
-
-namespace Lucian
+namespace Caitlyn
 {
 	extern void Load();
 	extern void UnLoad();
@@ -13,17 +12,17 @@ namespace Lucian
 	static void Harass();
 	static void Laneclear();
 
-	static bool ExtendedQ();
 	static void AutoKillsteal();
 	static bool Passive();
 
+	static void QLogic();
 
 
 	static ISpell2 *Q, *Q2, *W, *E, *R;
 
 	static IMenu* MainMenu;
 
-	static IMenu* LucianMenu;
+	static IMenu* CaitlynMenu;
 
 	static IMenu* ComboMenu;
 	static IMenu* HarassMenu;
@@ -32,19 +31,23 @@ namespace Lucian
 	static IMenu* DrawingMenu;
 
 	static IMenuOption* ComboQ;
-	static IMenuOption* ComboQExt;
+	static IMenuOption* ComboQImmobile;
+	//static IMenuOption* ComboQReduceLevel;
+	static IMenuOption*	ComboQMinChamps;
+	static IMenuOption* ComboQOutAARange;
+	static IMenuOption* ComboQAfterE;
+	static IMenuOption* ComboQEnemyAlone;
+	static IMenuOption* ComboQKS;
 	static IMenuOption* ComboW;
 	static IMenuOption* ComboE;
 	static IMenuOption* ComboERange;
 
-	static IMenuOption* HarassMinMana;
 	static IMenuOption* HarassQ;
 	static IMenuOption* HarassQExt;
 	static IMenuOption* HarassW;
 	static IMenuOption* HarassE;
 	static IMenuOption* HarassERange;
 
-	static IMenuOption* LaneclearMinMana;
 	static IMenuOption* LaneclearQ;
 	static IMenuOption* LaneclearQMinions;
 	static IMenuOption* LaneclearQChamps;

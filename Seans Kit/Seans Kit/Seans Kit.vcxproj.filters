@@ -36,6 +36,9 @@
     <ClInclude Include="SeansKit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Caitlyn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Lucian.cpp">
@@ -48,6 +51,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Utilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Caitlyn.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

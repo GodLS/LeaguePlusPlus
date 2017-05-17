@@ -185,7 +185,7 @@ void Lucian::Laneclear()
 	if (Player()->ManaPercent() < LaneclearMinMana->GetFloat())
 		return;
 
-	if (LaneclearQChamps && Player()->ManaPercent() > 20)
+	if (LaneclearQChamps->Enabled())
 	{
 		if (!Q->IsReady())
 			return;
@@ -360,9 +360,12 @@ PLUGIN_EVENT(void) AfterAttack(IUnit* Source, IUnit* Target)
 	}
 }
 
-PLUGIN_EVENT(void) OnGapCloser(GapCloserSpell const& Args)
+PLUGIN_EVENT(void) OnGapCloser(GapCloserSpell const& Spell)
 {
 	if (!GUtility->IsLeagueWindowFocused() || GGame->IsChatOpen())
+		return;
+
+	if (!Spell.Source || !Spell.Source->IsValidTarget())
 		return;
 
 	if (!MiscAntiGC->Enabled())
@@ -370,10 +373,10 @@ PLUGIN_EVENT(void) OnGapCloser(GapCloserSpell const& Args)
 
 	if (E->IsReady())
 	{
-		if (Args.Source->GetTeam() == Player()->GetTeam())
+		if (Spell.Source->GetTeam() == Player()->GetTeam())
 			return;
 
-		if (Player()->Distance(Args.EndPosition) <= 100)
+		if (Player()->Distance(Spell.EndPosition) <= 100)
 			E->CastOnPosition(GGame->CursorPosition());
 	}
 }
@@ -391,6 +394,10 @@ PLUGIN_EVENT(void) OnRender()
 		if (DrawQExt->Enabled())
 			GRender->DrawCircle(Player()->GetPosition(), Q2->Range(), Vec4(255, 255, 255, 50), 5);
 	}
+
+	if (E->IsReady())
+		if (DrawEAutoDash->Enabled())
+			GRender->DrawCircle(Player()->GetPosition(), ComboERange->GetFloat(), Vec4(255, 255, 255, 255), 5);
 
 }
 
@@ -458,6 +465,8 @@ void Lucian::InitMenu()
 	DrawingMenu = LucianMenu->AddMenu("Drawing");
 	DrawQ = DrawingMenu->CheckBox("Draw Q", true);
 	DrawQExt = DrawingMenu->CheckBox("Draw Extended Q", true);
+	DrawEAutoDash = DrawingMenu->CheckBox("Draw E auto dash range", true);
+
 
 }
 

@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Caitlyn.h" />
+    <ClInclude Include="LeeSin.h" />
     <ClInclude Include="LPPConstants.h" />
     <ClInclude Include="Lucian.h" />
     <ClInclude Include="PluginData.h" />
@@ -30,6 +31,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Caitlyn.cpp" />
+    <ClCompile Include="LeeSin.cpp" />
     <ClCompile Include="Lucian.cpp" />
     <ClCompile Include="PluginSDK.cpp" />
     <ClCompile Include="SeansKit.cpp" />

@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Champions">
+      <UniqueIdentifier>{a434f250-5d8a-4c7b-8a1d-b79651b88309}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Champions\Header Files">
+      <UniqueIdentifier>{7d372790-c19b-4183-ad34-17d6852d24a1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Utilities.h">
@@ -22,9 +28,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LPPConstants.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Lucian.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PluginData.h">
@@ -37,13 +40,16 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Caitlyn.h">
-      <Filter>Header Files</Filter>
+      <Filter>Champions\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LeeSin.h">
+      <Filter>Champions\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lucian.h">
+      <Filter>Champions\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Lucian.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PluginSDK.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -53,8 +59,14 @@
     <ClCompile Include="Utilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Lucian.cpp">
+      <Filter>Champions</Filter>
+    </ClCompile>
     <ClCompile Include="Caitlyn.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Champions</Filter>
+    </ClCompile>
+    <ClCompile Include="LeeSin.cpp">
+      <Filter>Champions</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,21 +1,14 @@
 #include "SeansKit.h"
 #include "Caitlyn.h"
 #include "Utilities.h"
+#include <string>
 
 using namespace Caitlyn;
-
-IUnit* PassiveTarget;
-// Eventually make proper Q KS damage like for varus Q, account for minions
 
 PLUGIN_EVENT(void) OnGameUpdate()
 {
 	if (!GUtility->IsLeagueWindowFocused() || GGame->IsChatOpen())
 		return;
-
-	if (Player()->HasBuff("CaitlynR"))
-		GOrbwalking->SetAttacksAllowed(false);
-	else
-		GOrbwalking->SetAttacksAllowed(true);
 
 	if (Player()->IsWindingUp())
 		return;
@@ -41,12 +34,24 @@ PLUGIN_EVENT(void) OnGameUpdate()
 		break;
 	case kModeNone:
 		break;
-	default:
-		break;
 	}
 
-	if (MiscKS->Enabled())
-		AutoKillsteal();
+	auto Targets = GEntityList->GetAllHeros(false, true);
+	for (auto Target : Targets)
+	{
+		if (!Target || !Target->IsValidTarget())
+			continue;
+
+		if (MiscKS->Enabled())
+			AutoKillsteal(Target);
+
+		if (MiscVsCC->Enabled() && W->IsReady())
+			AutoWCC(Target);
+	}
+
+
+	if ((GetAsyncKeyState(MiscManualE->GetInteger()) & 0x8000) != 0 && E->IsReady())
+		ManualE();
 }
 
 void Caitlyn::QLogic()
@@ -68,7 +73,7 @@ void Caitlyn::QLogic()
 
 					if (GOrbwalking->CanAttack())
 					{
-						if (GDamage->GetSpellDamage(Player(), QTarget, kSlotQ) < Health || GDamage->GetAutoAttackDamage(Player(), QTarget, true) > Health)
+						if (GDamage->GetAutoAttackDamage(Player(), QTarget, true) > Health)
 							return;
 					}
 				}
@@ -110,63 +115,357 @@ void Caitlyn::QLogic()
 	}
 }
 
+void Caitlyn::WLogic()
+{
+	if (!W->IsReady() || !ComboW->Enabled())
+		return;
+
+	auto Targets = GEntityList->GetAllHeros(false, true);
+
+	for (auto Target : Targets)
+	{
+		if (!Target || !Target->IsValidTarget())
+			continue;
+
+		if (!ComboWWhitelistMenu->GetOption(Target->ChampionName())->Enabled())
+			continue;
+
+		if (ComboWCC->Enabled() && IsImmobileFor(Target) >= W->GetDelay() + 1.1)
+			W->CastOnPosition(Target->ServerPosition());
+
+		if (ComboWSelfPeel->Enabled())
+			if (Target->Distance(Player()) <= 450)
+			{
+				AdvPredictionOutput* Output = nullptr;
+				W->RunPrediction(Target, false, kCollidesWithNothing, Output);
+
+				for (auto Trap : Traps)
+				{
+					if (Trap && Trap->IsValidObject() && Trap->Distance(Output->CastPosition) <= 200)
+						return;
+				}
+				W->CastOnPosition(Output->CastPosition);
+			}
+	}
+}
+
+void Caitlyn::ELogic()
+{
+	if (!E->IsReady() || !ComboE->Enabled())
+		return;
+
+	if (Player()->Distance(GGame->CursorPosition()) >= ComboERange->GetFloat())
+	{
+		auto Position = Player()->ServerPosition() - (GGame->CursorPosition() - Player()->ServerPosition());
+		E->CastOnPosition(Player()->GetPosition().Extend(Position, Player()->Distance(GGame->CursorPosition())));
+		return;
+	}
+
+	auto Targets = GEntityList->GetAllHeros(false, true);
+
+	for (auto Target : Targets)
+	{
+		if (!Target || !Target->IsValidTarget())
+			continue;;
+
+		if (ComboESelfPeel->Enabled() && Target->Distance(Player()) <= 300)
+		{
+			E->CastOnTarget(Target);
+			return;
+		}
+	}
+}
+
+void Caitlyn::HarassQLogic()
+{
+	if (Q->IsReady())
+	{
+		if (HarassQ->Enabled())
+		{
+			auto QTarget = Q->FindTarget(PhysicalDamage);
+
+			if (QTarget && QTarget->IsValidTarget())
+			{
+				auto Health = QTarget->GetHealth();
+
+				if (Player()->Distance(QTarget) < Player()->GetRealAutoAttackRange(QTarget))
+				{
+					if (HarassQOutAARange->Enabled())
+						return;
+
+					if (GOrbwalking->CanAttack())
+					{
+						if (GDamage->GetAutoAttackDamage(Player(), QTarget, true) > Health)
+							return;
+					}
+				}
+
+				if (HarassQKS->Enabled() && GDamage->GetSpellDamage(Player(), QTarget, kSlotQ) > Health)
+				{
+					if (Q->CastOnTargetAoE(QTarget, 1, kHitChanceVeryHigh))
+						return;
+				}
+
+				if (HarassQEnemyAlone->Enabled() && CountEnemiesInRange(QTarget, 1000) < 1)
+				{
+					if (Q->CastOnTarget(QTarget, kHitChanceVeryHigh))
+						return;
+				}
+
+				if (HarassQImmobile->Enabled())
+				{
+					if (IsImmobileFor(QTarget) >=
+						Player()->Distance(QTarget) / Q->Speed() + Q->GetDelay())
+					{
+						Q->CastOnPosition(QTarget->ServerPosition());
+						return;
+					}
+
+					if (QTarget->HasBuffOfType(BUFF_Slow))
+						if (Q->CastOnTargetAoE(QTarget, 1, kHitChanceVeryHigh))
+							return;
+
+					if (Q->CastOnTargetAoE(QTarget, 1, kHitChanceDashing))
+						return;
+				}
+
+				if (Q->CastOnTargetAoE(QTarget, HarassQMinChamps->GetInteger(), kHitChanceVeryHigh))
+					return;
+
+			}
+		}
+	}
+}
+
+void Caitlyn::HarassWLogic()
+{
+	if (!W->IsReady() || !HarassW->Enabled())
+		return;
+
+	auto Targets = GEntityList->GetAllHeros(false, true);
+
+	for (auto Target : Targets)
+	{
+		if (!Target || !Target->IsValidTarget())
+			continue;
+
+		if (!HarassWWhitelistMenu->GetOption(Target->ChampionName())->Enabled())
+			continue;
+
+		if (HarassWCC->Enabled() && IsImmobileFor(Target) >= W->GetDelay() + 1.1)
+			W->CastOnPosition(Target->ServerPosition());
+
+		if (HarassWSelfPeel->Enabled())
+			if (Target->Distance(Player()) <= 450)
+			{
+				AdvPredictionOutput* Output = nullptr;
+				W->RunPrediction(Target, false, kCollidesWithNothing, Output);
+
+				for (auto Trap : Traps)
+				{
+					if (Trap && Trap->IsValidObject() && Trap->Distance(Output->CastPosition) <= 200)
+						return;
+				}
+				W->CastOnPosition(Output->CastPosition);
+			}
+	}
+}
+
+void Caitlyn::HarassELogic()
+{
+	if (!E->IsReady() || !HarassE->Enabled())
+		return;
+
+	if (Player()->Distance(GGame->CursorPosition()) >= HarassERange->GetFloat())
+	{
+		auto Position = Player()->ServerPosition() - (GGame->CursorPosition() - Player()->ServerPosition());
+		E->CastOnPosition(Player()->GetPosition().Extend(Position, Player()->Distance(GGame->CursorPosition())));
+		return;
+	}
+
+	auto Targets = GEntityList->GetAllHeros(false, true);
+
+	for (auto Target : Targets)
+	{
+		if (!Target || !Target->IsValidTarget())
+			continue;;
+
+		if (HarassESelfPeel->Enabled() && Target->Distance(Player()) <= 300)
+		{
+			E->CastOnTarget(Target);
+			return;
+		}
+	}
+}
+
 void Caitlyn::Combo()
 {
-
+	ELogic();
+	WLogic();
 	QLogic();
-
 }
 
 void Caitlyn::Harass()
 {
-	
+	HarassELogic();
+	HarassWLogic();
+	HarassQLogic();
 }
 
 void Caitlyn::Laneclear()
 {
-	/*if (LaneclearQChamps && Player()->ManaPercent() > 20)
+	if (!Q->IsReady())
+		return;
+
+	if (Player()->ManaPercent() < LaneclearMinMana->GetFloat())
+		return;
+
+	if (LaneclearQChamps->Enabled())
 	{
-		if (!Q->IsReady())
-			return;
-
 		auto Target = GTargetSelector->FindTarget(QuickestKill, PhysicalDamage, Q->Range());
-
 		if (Target && Target->IsValidTarget())
 		{
-			Q->CastOnTarget(Target);
-			return;
+			if (Q->CastOnTargetAoE(Target, 1, kHitChanceVeryHigh))
+				return;
 		}
-	}*/
+	}
+
+	//if (LaneclearQMinions->Enabled())
+	//{
+		//Vec3 CastPosition;
+		//int EnemiesHit = 0;
+
+		//GPrediction->FindBestCastPosition(Q->Range(), Q->Radius(), true, true, true, CastPosition, EnemiesHit);
+
+		/*if (Q->AttackMinions(LaneclearQMinions->GetInteger()))
+			return;*/
+
+		/*if (EnemiesHit >= LaneclearQMinions->GetInteger())
+			Q->CastOnPosition(CastPosition);*/
+	//}
 }
 
-void Caitlyn::AutoKillsteal()
+void Caitlyn::AutoKillsteal(IUnit* Target)
 {
+	if (Q->IsReady() && Target->GetHealth() < GDamage->GetSpellDamage(Player(), Target, kSlotQ))
+	{
+		Q->CastOnTargetAoE(Target, 1, kHitChanceVeryHigh);
+		return;
+	}
 
+	if (CountEnemiesInRange(Player(), 600) < 1 && CountEnemiesInRange(Target, 600) < 1 )
+	{
+		if (E->IsReady() && Target->GetHealth() < GDamage->GetSpellDamage(Player(), Target, kSlotE))
+		{
+			E->CastOnTarget(Target, kHitChanceVeryHigh);
+			return;
+		}
+
+		if (R->IsReady() && Target->GetHealth() < GDamage->GetSpellDamage(Player(), Target, kSlotR))
+		{
+			for (auto Enemy : GEntityList->GetAllHeros(false, true))
+			{
+				if (!Enemy || !Enemy->IsValidTarget() || !Enemy->GetNetworkId() == Target->GetNetworkId())
+					continue;
+
+				if (IsPointInsideRectangle(Player()->GetPosition(), Target->GetPosition(), 600, Enemy->GetPosition()))
+					continue;
+
+				R->CastOnTarget(Target);
+				return;
+			}
+		}
+	}
+
+}
+
+void Caitlyn::AutoWCC(IUnit* Target)
+{
+	if (IsImmobileFor(Target) >= W->GetDelay() + 1.1)
+		W->CastOnPosition(Target->ServerPosition());
+}
+
+void Caitlyn::ManualE()
+{
+	auto Position = Player()->ServerPosition() - (GGame->CursorPosition() - Player()->ServerPosition());
+
+	E->CastOnPosition(Player()->GetPosition().Extend(Position, Player()->Distance(GGame->CursorPosition())));
 }
 
 PLUGIN_EVENT(void) OnDoCast(CastedSpell const& Spell)
 {
+	if (!GUtility->IsLeagueWindowFocused() || GGame->IsChatOpen())
+		return;
+
 	if (Spell.Caster_ != Player())
 		return;
 
-	if (GOrbwalking->GetOrbwalkingMode() != kModeCombo)
-		return;
-
-	auto SpellSlot = GSpellData->GetSlot(Spell.Data_);
-
-	if (SpellSlot == kSlotE)
+	if (GOrbwalking->GetOrbwalkingMode() == kModeCombo)
 	{
-		if (ComboQAfterE->Enabled() && Q->IsReady() && Player()->ManaPercent() > 9)
-		{
-			auto QTarget = Q->FindTarget(PhysicalDamage);
-			if (QTarget && QTarget->IsValidTarget())
-			{
-				if (ComboQOutAARange->Enabled())
-					if (QTarget->Distance(Player()) < 650)
-						return;
+		auto SpellSlot = GSpellData->GetSlot(Spell.Data_);
 
-				if (Q->CastOnTargetAoE(QTarget, 1, kHitChanceHigh))
+		if (SpellSlot == kSlotE)
+		{
+			if (ComboWAfterE->Enabled() && W->IsReady())
+			{
+				auto WTarget = GTargetSelector->FindTarget(ClosestPriority, PhysicalDamage, 450);
+
+				if (!WTarget || !WTarget->IsValidTarget())				
 					return;
+
+				if (!ComboWWhitelistMenu->GetOption(WTarget->ChampionName())->Enabled())
+					return;
+
+				W->CastOnTarget(WTarget, kHitChanceVeryHigh);
+			}
+
+			if (ComboQAfterE->Enabled() && Q->IsReady() && Player()->ManaPercent() > 9)
+			{
+				auto QTarget = Q->FindTarget(PhysicalDamage);
+				if (QTarget && QTarget->IsValidTarget())
+				{
+					if (ComboQOutAARange->Enabled())
+						if (QTarget->Distance(Player()) < 650)
+							return;
+
+					if (Q->CastOnTargetAoE(QTarget, 1, kHitChanceHigh))
+						return;
+				}
+			}
+		}		
+	}
+	else if (GOrbwalking->GetOrbwalkingMode() == kModeMixed)
+	{
+		auto SpellSlot = GSpellData->GetSlot(Spell.Data_);
+
+		if (SpellSlot == kSlotE)
+		{
+			if (Player()->ManaPercent() < HarassMinMana->GetFloat())
+				return;
+
+			if (HarassWAfterE->Enabled() && W->IsReady())
+			{
+				auto WTarget = GTargetSelector->FindTarget(ClosestPriority, PhysicalDamage, 450);
+
+				if (!HarassWWhitelistMenu->GetOption(WTarget->ChampionName())->Enabled())
+					return;
+
+				if (WTarget && WTarget->IsValidTarget())
+					W->CastOnTarget(WTarget, kHitChanceVeryHigh);
+			}
+
+			if (HarassQAfterE->Enabled() && Q->IsReady())
+			{
+				auto QTarget = Q->FindTarget(PhysicalDamage);
+				if (QTarget && QTarget->IsValidTarget())
+				{
+					if (HarassQOutAARange->Enabled())
+						if (QTarget->Distance(Player()) < 650)
+							return;
+
+					if (Q->CastOnTargetAoE(QTarget, 1, kHitChanceHigh))
+						return;
+				}
 			}
 		}
 	}
@@ -175,23 +474,71 @@ PLUGIN_EVENT(void) OnDoCast(CastedSpell const& Spell)
 
 PLUGIN_EVENT(void) OnGapCloser(GapCloserSpell const& Spell)
 {
-	
+	if (!GUtility->IsLeagueWindowFocused() || GGame->IsChatOpen())
+		return;
+
+	if (!Spell.Source || !Spell.Source->IsValidTarget())
+		return;
+
+	if (Spell.Source->GetTeam() == Player()->GetTeam())
+		return;
+
+	if (ComboEAntiGC->Enabled() && E->IsReady() && GOrbwalking->GetOrbwalkingMode() == kModeCombo && Player()->Distance(Spell.EndPosition) <= 100)
+	{
+		E->CastOnTarget(Spell.Source, kHitChanceImpossible);
+		return;
+	}
+
+	if (MiscEAntiGC->Enabled() && E->IsReady() && Player()->Distance(Spell.EndPosition) <= 100)
+	{
+		E->CastOnTarget(Spell.Source, kHitChanceImpossible);
+		return;
+	}
+
+	if (MiscWAntiGC->Enabled() && W->IsReady() && Player()->Distance(Spell.EndPosition) <= W->Range())
+	{
+		for (auto Trap : Traps)
+		{
+			if (Trap && Trap->IsValidObject() && Trap->Distance(Spell.EndPosition) <= 200)
+				return;
+		}
+		W->CastOnPosition(Spell.EndPosition);
+		return;
+	}
 }
 
 PLUGIN_EVENT(void) OnRender()
 {
+	if (!GUtility->IsLeagueWindowFocused() || GGame->IsChatOpen())
+		return;
 
-}
-
-PLUGIN_EVENT(void) AfterAttack(IUnit* Source, IUnit* Target)
-{
+	if (Q->IsReady())	
+		if (DrawQ->Enabled())
+			GRender->DrawCircle(Player()->GetPosition(), Q->Range(), Vec4(255, 255, 255, 255), 5);
 	
+	if (E->IsReady())
+		if (DrawEAutoDash->Enabled())
+			GRender->DrawCircle(Player()->GetPosition(), ComboERange->GetFloat(), Vec4(255, 255, 255, 255), 5);
 }
 
-//PLUGIN_EVENT(void) OnSpellCast(CastedSpell const& Spell)
-//{
-//
-//}
+
+PLUGIN_EVENT(void) OnInterruptible(InterruptibleSpell const& Spell)
+{
+	if (!GUtility->IsLeagueWindowFocused() || GGame->IsChatOpen())
+		return;
+
+	if (!MiscWInterrupt->Enabled())
+		return;
+
+	if (Spell.Source->GetTeam() == Player()->GetTeam())
+		return;
+
+	if (!W->IsReady())
+		return;
+
+	if (Spell.EndTime - GGame->Time() < W->GetDelay() + 1.1)
+		W->CastOnPosition(Spell.Source->ServerPosition());
+}
 
 PLUGIN_EVENT(void) OnLevelUp(IUnit* Source, int NewLevel)
 {
@@ -207,14 +554,51 @@ PLUGIN_EVENT(void) OnLevelUp(IUnit* Source, int NewLevel)
 
 PLUGIN_EVENT(void) OnExitVisible(IUnit* Source)
 {
-	
+	if (!GUtility->IsLeagueWindowFocused() || GGame->IsChatOpen())
+		return;
+
+	if (!ComboWBush->Enabled())
+		return;
+
+	if (!Source || !Source->IsValidTarget())
+		return;
+
+	if (Source->GetTeam() == Player()->GetTeam())
+		return;
+
+	if (Source->GetClassId() != kAIHeroClient)
+		return;
+
+	if (!ComboWWhitelistMenu->GetOption(Source->ChampionName())->Enabled())
+		return;
+
+	if (Source->Distance(Player()) > W->Range())
+		return;
+
+	if (GNavMesh->IsPointGrass(Source->GetPosition()))
+	{		
+		for (auto Trap : Traps)
+		{
+			if (Trap && Trap->IsValidObject() && Source->Distance(Trap) <= 200)
+				return;
+		}
+		W->CastOnTarget(Source);
+
+	}
 }
 
 PLUGIN_EVENT(void) OnBuffAdd(IUnit* Source, void* BuffData)
 {
-	if (Source == Player() && Player()->HasBuff("caitlynheadshotrangecheck"))
+	if (!GUtility->IsLeagueWindowFocused() || GGame->IsChatOpen())
+		return;
+
+	if (Source && Source == Player() && Player()->HasBuff("caitlynheadshotrangecheck"))
 	{
 		if (GOrbwalking->GetOrbwalkingMode() == kModeNone)
+			return;
+
+		auto CurrentTarget = GOrbwalking->GetLastTarget();
+		if (CurrentTarget && CurrentTarget->IsValidTarget() && CurrentTarget->GetHealth() < GDamage->GetAutoAttackDamage(Player(), CurrentTarget, true))
 			return;
 
 		auto Targets = GEntityList->GetAllHeros(false, true);
@@ -232,10 +616,30 @@ PLUGIN_EVENT(void) OnBuffAdd(IUnit* Source, void* BuffData)
 
 PLUGIN_EVENT(void) OnBuffRemove(IUnit* Source, void* BuffData)
 {
-	if (PassiveTarget && Source == PassiveTarget && !PassiveTarget->HasBuff("caitlynyordletrapinternal"))
+	if (PassiveTarget && Source && Source == PassiveTarget && !PassiveTarget->HasBuff("caitlynyordletrapinternal"))
 	{
 		GOrbwalking->SetOverrideTarget(nullptr);
 		PassiveTarget = nullptr;
+	}
+}
+
+PLUGIN_EVENT(void) OnCreateObject(IUnit* Source)
+{
+	if (Source && Source->GetObjectName() == "Cupcake Trap" && Source->GetNetworkId() == Player()->GetNetworkId())
+		Traps.emplace_back(Source);
+}
+
+PLUGIN_EVENT(void) OnDestroyObject(IUnit* Source)
+{
+	if (Source && Source->GetObjectName() == "Cupcake Trap" && Source->GetNetworkId() == Player()->GetNetworkId())
+	{
+		//for (auto Trap : Traps)
+		//{
+			Traps.erase(std::remove_if(Traps.begin(),
+				Traps.end(),
+				[&](IUnit* Trap) { return Trap == Source; }
+			));
+		//}
 	}
 }
 
@@ -247,7 +651,6 @@ bool Caitlyn::Passive()
 void Caitlyn::InitEvents()
 {
 	GEventManager->AddEventHandler(kEventOnGameUpdate, OnGameUpdate);
-	GEventManager->AddEventHandler(kEventOrbwalkAfterAttack, AfterAttack);
 	GEventManager->AddEventHandler(kEventOnGapCloser, OnGapCloser);
 	GEventManager->AddEventHandler(kEventOnRender, OnRender);
 	GEventManager->AddEventHandler(kEventOnLevelUp, OnLevelUp);
@@ -255,7 +658,9 @@ void Caitlyn::InitEvents()
 	GEventManager->AddEventHandler(kEventOnExitVisible, OnExitVisible);
 	GEventManager->AddEventHandler(kEventOnBuffAdd, OnBuffAdd);
 	GEventManager->AddEventHandler(kEventOnBuffRemove, OnBuffRemove);
-	//GEventManager->AddEventHandler(kEventOnSpellCast, OnSpellCast);
+	GEventManager->AddEventHandler(kEventOnCreateObject, OnCreateObject);
+	GEventManager->AddEventHandler(kEventOnDestroyObject, OnDestroyObject);
+	GEventManager->AddEventHandler(kEventOnInterruptible, OnInterruptible);
 }
 
 void Caitlyn::InitSpells()
@@ -263,8 +668,8 @@ void Caitlyn::InitSpells()
 	Q = GPluginSDK->CreateSpell2(kSlotQ, kLineCast, true, true, kCollidesWithYasuoWall);
 	Q->SetSkillshot(0.625f, 90.f, 2200.f, 1300.f);
 
-	W = GPluginSDK->CreateSpell2(kSlotW, kCircleCast, false, true, kCollidesWithNothing);
-	W->SetSkillshot(0.3f, 80.f, 1600.f, 1000.f);
+	W = GPluginSDK->CreateSpell2(kSlotW, kCircleCast, false, false, kCollidesWithNothing);
+	W->SetSkillshot(0.3f, 80.f, FLT_MAX, 1000.f);
 
 	E = GPluginSDK->CreateSpell2(kSlotE, kLineCast, true, false, kCollidesWithMinions | kCollidesWithHeroes | kCollidesWithYasuoWall);
 	E->SetSkillshot(0.125f, 70.f, 1600.f, 1000.f);
@@ -279,37 +684,75 @@ void Caitlyn::InitMenu()
 	CaitlynMenu = MainMenu->AddMenu("Caitlyn");
 
 	ComboMenu = CaitlynMenu->AddMenu("Combo");
-	ComboQ = ComboMenu->CheckBox("Use Q in combo:", true);
-	ComboQMinChamps = ComboMenu->AddInteger("-- if X targets hit", 1, 5, 1);
-	ComboQImmobile = ComboMenu->CheckBox("-- vs cc", true);
-	ComboQAfterE = ComboMenu->CheckBox("-- after E cast", true);
-	ComboQEnemyAlone = ComboMenu->CheckBox("-- if enemy alone", true);
-	ComboQKS = ComboMenu->CheckBox("-- if killable", true);
-	ComboQOutAARange = ComboMenu->CheckBox("-- only out of AA range", false);
+	ComboQMenu = ComboMenu->AddMenu("Q Settings ");
+	ComboQ = ComboQMenu->CheckBox("Use Q:", true);
+	ComboQMinChamps = ComboQMenu->AddInteger("-- if X targets hit", 1, 5, 2);
+	ComboQImmobile = ComboQMenu->CheckBox("-- vs CCd", true);
+	ComboQAfterE = ComboQMenu->CheckBox("-- after E cast", true);
+	ComboQEnemyAlone = ComboQMenu->CheckBox("-- if enemy alone", true);
+	ComboQKS = ComboQMenu->CheckBox("-- if killable", true);
+	ComboQOutAARange = ComboQMenu->CheckBox("-- only out of AA range", false);
+	ComboWMenu = ComboMenu->AddMenu("W Settings  ");
+	ComboW = ComboWMenu->CheckBox("Use W:", true);
+	ComboWWhitelistMenu = ComboWMenu->AddMenu("Whitelist");
+	for (auto Target : GEntityList->GetAllHeros(false, true))
+	{
+		ComboWWhitelistMenu->CheckBox(Target->ChampionName(), true);
+	}
+	ComboWSelfPeel = ComboWMenu->CheckBox("-- enemy ontop of me ", true);
+	ComboWCC = ComboWMenu->CheckBox("-- vs CCd", true);
+	ComboWBush = ComboWMenu->CheckBox("-- enemy enter bush", true);
+	ComboWAfterE = ComboWMenu->CheckBox("-- after E cast", true);
+	ComboEMenu = ComboMenu->AddMenu("E Settings   ");
+	ComboE = ComboEMenu->CheckBox("Use E:", true);
+	ComboERange = ComboEMenu->AddFloat("-- cursor distance > ", 0, 1000, 650);
+	ComboEAntiGC = ComboEMenu->CheckBox("-- anti gapcloser", true);
+	ComboESelfPeel = ComboEMenu->CheckBox("-- enemy ontop of me", true);
 
-	ComboW = ComboMenu->CheckBox("Use W in combo", true);
-	ComboE = ComboMenu->CheckBox("Use E in combo when:", true);
-	ComboERange = ComboMenu->AddFloat("-- cursor distance > ", 0, 1000, 350);
-
-	HarassMenu = CaitlynMenu->AddMenu("Harass");
-	HarassQ = HarassMenu->CheckBox("Use Q in harass", true);
-	HarassQExt = HarassMenu->CheckBox("Use Extended Q in harass", true);
-	HarassW = HarassMenu->CheckBox("Use W in harass", false);
-	HarassE = HarassMenu->CheckBox("Use E in harass when:", false);
-	HarassERange = HarassMenu->AddFloat("-- cursor distance > ", 0, 1000, 350);
+	HarassMenu = CaitlynMenu->AddMenu("Harass ");
+	HarassMinMana = HarassMenu->AddFloat("Min. mana percent", 0, 100, 25);
+	//HarassQMenu = HarassMenu->AddMenu("Q Settings ");
+	HarassQ = HarassMenu->CheckBox("Use Q: ", true);
+	HarassQMinChamps = HarassMenu->AddInteger("-- if X targets hit ", 1, 5, 2);
+	HarassQImmobile = HarassMenu->CheckBox("-- vs CCd ", true);
+	HarassQAfterE = HarassMenu->CheckBox("-- after E cast ", true);
+	HarassQEnemyAlone = HarassMenu->CheckBox("-- if enemy alone ", true);
+	HarassQKS = HarassMenu->CheckBox("-- if killable ", true);
+	HarassQOutAARange = HarassMenu->CheckBox("-- only out of AA range ", false);
+	//HarassWMenu = HarassMenu->AddMenu("W Settings  ");
+	HarassW = HarassMenu->CheckBox("Use W: ", false);
+	HarassWWhitelistMenu = HarassMenu->AddMenu("Whitelist ");
+	for (auto Target : GEntityList->GetAllHeros(false, true))
+	{
+		HarassWWhitelistMenu->CheckBox(Target->ChampionName(), true);
+	}
+	HarassWSelfPeel = HarassMenu->CheckBox("-- enemy ontop of me ", true);
+	HarassWCC = HarassMenu->CheckBox("-- vs CCd ", true);
+	HarassWBush = HarassMenu->CheckBox("-- enemy enter bush ", true);
+	HarassWAfterE = HarassMenu->CheckBox("-- after E cast ", true);
+	//HarassEMenu = HarassMenu->AddMenu("E Settings   ");
+	HarassE = HarassMenu->CheckBox("Use E:", false);
+	HarassERange = HarassMenu->AddFloat("-- cursor distance > ", 0, 1000, 650);
+	HarassEAntiGC = HarassMenu->CheckBox("-- anti gapcloser", true);
+	HarassESelfPeel = HarassMenu->CheckBox("-- enemy ontop of me", true);
 
 	LaneclearMenu = CaitlynMenu->AddMenu("Laneclear");
+	LaneclearMinMana = LaneclearMenu->AddFloat("Min. mana percent", 0, 100, 25);
 	LaneclearQ = LaneclearMenu->CheckBox("Use Q in laneclear when:", true);
 	LaneclearQChamps = LaneclearMenu->CheckBox("-- can hit champion", true);
-	LaneclearQMinions = LaneclearMenu->AddInteger("-- X minions hit [disabled]", 1, 7, 3);
+	LaneclearQMinions = LaneclearMenu->AddInteger("-- X minions hit **[disabled]**", 1, 7, 3);
 
 	MiscMenu = CaitlynMenu->AddMenu("Misc.");
 	MiscKS = MiscMenu->CheckBox("Auto KS", true);
-	MiscAntiGC = MiscMenu->CheckBox("Anti-Gapcloser", true);
+	MiscVsCC = MiscMenu->CheckBox("W CCd", true);
+	MiscWInterrupt = MiscMenu->CheckBox("W Interruptible", true);
+	MiscWAntiGC = MiscMenu->CheckBox("Anti-Gapcloser W", true);
+	MiscEAntiGC = MiscMenu->CheckBox("Anti-Gapcloser E", true);
+	MiscManualE = MiscMenu->AddKey("E to mouse", 86);
 
 	DrawingMenu = CaitlynMenu->AddMenu("Drawing");
 	DrawQ = DrawingMenu->CheckBox("Draw Q", true);
-	DrawQExt = DrawingMenu->CheckBox("Draw Extended Q", true);
+	DrawEAutoDash = DrawingMenu->CheckBox("Draw E combo auto dash range", true);
 }
 
 void Caitlyn::UnLoad()
@@ -318,7 +761,6 @@ void Caitlyn::UnLoad()
 	MainMenu->Remove();
 
 	GEventManager->RemoveEventHandler(kEventOnGameUpdate, OnGameUpdate);
-	GEventManager->RemoveEventHandler(kEventOrbwalkAfterAttack, AfterAttack);
 	GEventManager->RemoveEventHandler(kEventOnGapCloser, OnGapCloser);
 	GEventManager->RemoveEventHandler(kEventOnRender, OnRender);
 	GEventManager->RemoveEventHandler(kEventOnLevelUp, OnLevelUp);
@@ -326,6 +768,9 @@ void Caitlyn::UnLoad()
 	GEventManager->RemoveEventHandler(kEventOnExitVisible, OnExitVisible);
 	GEventManager->RemoveEventHandler(kEventOnBuffAdd, OnBuffAdd);
 	GEventManager->RemoveEventHandler(kEventOnBuffRemove, OnBuffRemove);
+	GEventManager->RemoveEventHandler(kEventOnCreateObject, OnCreateObject);
+	GEventManager->RemoveEventHandler(kEventOnDestroyObject, OnDestroyObject);
+	GEventManager->RemoveEventHandler(kEventOnInterruptible, OnInterruptible);
 
 }
 

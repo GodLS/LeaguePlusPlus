@@ -54,6 +54,7 @@ namespace Lucian
 
 	static IMenuOption* DrawQ;
 	static IMenuOption* DrawQExt;
+	static IMenuOption* DrawEAutoDash;
 
 
 

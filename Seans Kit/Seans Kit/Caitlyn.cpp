@@ -592,7 +592,7 @@ PLUGIN_EVENT(void) OnBuffAdd(IUnit* Source, void* BuffData)
 	if (!GUtility->IsLeagueWindowFocused() || GGame->IsChatOpen())
 		return;
 
-	if (Source && Source == Player() && Player()->HasBuff("caitlynheadshotrangecheck"))
+	if (Source && Source == Player() && Player()->HasBuff("caitlynheadshotrangecheck") && MiscAANetTrap->Enabled())
 	{
 		if (GOrbwalking->GetOrbwalkingMode() == kModeNone)
 			return;
@@ -749,6 +749,7 @@ void Caitlyn::InitMenu()
 	MiscWAntiGC = MiscMenu->CheckBox("Anti-Gapcloser W", true);
 	MiscEAntiGC = MiscMenu->CheckBox("Anti-Gapcloser E", true);
 	MiscManualE = MiscMenu->AddKey("E to mouse", 86);
+	MiscAANetTrap = MiscMenu->CheckBox("AA net/trap targets (passive)", true);
 
 	DrawingMenu = CaitlynMenu->AddMenu("Drawing");
 	DrawQ = DrawingMenu->CheckBox("Draw Q", true);

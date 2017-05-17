@@ -1,10 +1,11 @@
-﻿  SeansKit.cpp
+﻿  Caitlyn.cpp
+  SeansKit.cpp
 SeansKit.cpp(36): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
 SeansKit.cpp(41): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
      Creating library D:\Downloads\LeaguePlusPlus-master (1)\LeaguePlusPlus-master\Seans Kit\Release\Seans Kit.lib and object D:\Downloads\LeaguePlusPlus-master (1)\LeaguePlusPlus-master\Seans Kit\Release\Seans Kit.exp
   Generating code
-  1 of 375 functions ( 0.3%) were compiled, the rest were copied from previous compilation.
+  6 of 375 functions ( 1.6%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    1 functions had inline decision re-evaluated but remain unchanged
+    2 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Seans Kit.vcxproj -> D:\Downloads\LeaguePlusPlus-master (1)\LeaguePlusPlus-master\Seans Kit\Release\Seans Kit.dll

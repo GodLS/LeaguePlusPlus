@@ -97,6 +97,7 @@ namespace Caitlyn
 	static IMenuOption* MiscWInterrupt;
 	static IMenuOption* MiscVsCC;
 	static IMenuOption* MiscManualE;
+	static IMenuOption* MiscAANetTrap;
 
 	static IMenuOption* DrawQ;
 	static IMenuOption* DrawEAutoDash;

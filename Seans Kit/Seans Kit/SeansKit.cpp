@@ -28,15 +28,14 @@ PLUGIN_API void OnUnload()
 
 void SeansKit::LoadPlugin()
 {
-	std::string ChampionName = GEntityList->Player()->ChampionName();
+	char* ChampionName = (char*)GEntityList->Player()->ChampionName();
 
-	if (ChampionName == "Caitlyn")
+	if (strcmp(ChampionName, "Caitlyn") == 0)
 	{
 		Caitlyn::Load();
 		SeansKit::CheckUpdates(ChampionName, 1.0);
-
 	}
-	if (ChampionName == "Lucian")
+	if (strcmp(ChampionName, "Lucian") == 0)
 	{
 		Lucian::Load();
 		SeansKit::CheckUpdates(ChampionName, 2.1);
@@ -67,7 +66,7 @@ std::string SeansKit::format(const char* format, ...)
 	return result;
 }
 
-void SeansKit::CheckUpdates(std::string ChampionName, int version)
+void SeansKit::CheckUpdates(char* ChampionName, int version)
 {
 	std::string NewestVersion;
 
